@@ -1,0 +1,12 @@
+{
+  "name": "focustask",
+  "version": "1.0.0",
+  "description": "Gerenciador de Tarefas Ágil com Sistema de Login e SQLite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["todo", "sqlite", "auth", "vanilla-js"],
+  "author": "",
+  "license": "MIT"
+}

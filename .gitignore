@@ -1,0 +1,15 @@
+# Logs & Runtime
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SQLite Database (dados locais isolados)
+database.sqlite
+database.sqlite-wal
+database.sqlite-shm
+
+# Ambiente e SO
+.env
+.DS_Store
+Thumbs.db
