@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusTask — Painel de Tarefas & Login</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%230284c7%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><polygon points=%2213 2 3 14 12 14 11 22 21 10 12 10 13 2%22/></svg>">
+</head>
+<body>
+
+  <!-- ============================================================
+       TELA DE AUTENTICAÇÃO (LOGIN / REGISTRO COM SQLITE)
+       ============================================================ -->
+  <div id="authView" class="auth-wrapper">
+    <div class="auth-card">
+      <!-- Cabeçalho do Card -->
+      <div class="auth-header">
+        <div class="auth-logo-badge">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <h2>FocusTask</h2>
+        <p id="authSubtitle">Acesse o seu painel exclusivo de tarefas</p>
+      </div>
+
+      <!-- Abas: Entrar / Criar Conta -->
+      <div class="auth-tabs" role="tablist">
+        <button type="button" id="tabLoginBtn" class="auth-tab active" role="tab" aria-selected="true">Entrar</button>
+        <button type="button" id="tabRegisterBtn" class="auth-tab" role="tab" aria-selected="false">Criar Conta</button>
+      </div>
+
+      <!-- Mensagem de Alerta / Erro -->
+      <div id="authErrorBanner" class="auth-alert hidden" role="alert"></div>
+
+      <!-- Formulário de Login -->
+      <form id="loginForm" class="auth-form">
+        <div class="form-group">
+          <label for="loginEmail">E-mail</label>
+          <input 
+            type="email" 
+            id="loginEmail" 
+            placeholder="seu.email@exemplo.com" 
+            required 
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Senha</label>
+          <div class="password-input-wrap">
+            <input 
+              type="password" 
+              id="loginPassword" 
+              placeholder="Digite sua senha" 
+              required 
+              autocomplete="current-password"
+            >
+            <button type="button" class="toggle-password-btn" title="Mostrar/Ocultar Senha" data-target="loginPassword">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="loginSubmitBtn" class="primary-btn auth-submit-btn">
+          <span>Acessar Meu Painel</span>
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </form>
+
+      <!-- Formulário de Registro -->
+      <form id="registerForm" class="auth-form hidden">
+        <div class="form-group">
+          <label for="registerName">Nome Completo</label>
+          <input 
+            type="text" 
+            id="registerName" 
+            placeholder="Como prefere ser chamado?" 
+            required 
+            maxlength="50" 
+            autocomplete="name"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="registerEmail">E-mail</label>
+          <input 
+            type="email" 
+            id="registerEmail" 
+            placeholder="seu.email@exemplo.com" 
+            required 
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="registerPassword">Criar Senha</label>
+          <div class="password-input-wrap">
+            <input 
+              type="password" 
+              id="registerPassword" 
+              placeholder="Mínimo de 6 caracteres" 
+              required 
+              minlength="6"
+              autocomplete="new-password"
+            >
+            <button type="button" class="toggle-password-btn" title="Mostrar/Ocultar Senha" data-target="registerPassword">
+              👁️
+            </button>
+          </div>
+          <small class="password-hint">Armazenada com hash seguro e criptografia no SQLite.</small>
+        </div>
+
+        <button type="submit" id="registerSubmitBtn" class="primary-btn auth-submit-btn">
+          <span>Criar Conta e Começar</span>
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <span class="sqlite-badge">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+          </svg>
+          Banco de Dados SQLite Integrado
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PAINEL PRINCIPAL (EXIBIDO APENAS APÓS O LOGIN)
+       ============================================================ -->
+  <div class="app-layout hidden" id="appLayout">
+    <!-- Header Principal -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="brand">
+          <div class="brand-badge" aria-hidden="true">
+            <svg class="svg-icon icon-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <h1>FocusTask</h1>
+            <p class="brand-subtitle">Seu painel pessoal de tarefas</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Progresso das Tarefas do Usuário -->
+        <div class="daily-progress" id="progressContainer" title="Tarefas concluídas no seu painel">
+          <div class="progress-info">
+            <span class="progress-label">Concluídas</span>
+            <span class="progress-count" id="progressCount">0/0</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Seletor de Troca de Tema (Claro / Escuro) -->
+        <div class="theme-switch-group" role="radiogroup" aria-label="Opções de Tema">
+          <button type="button" class="theme-switch-btn active" id="themeLightBtn" data-theme-target="light" title="Ativar Tema Claro">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <span>Claro</span>
+          </button>
+          
+          <button type="button" class="theme-switch-btn" id="themeDarkBtn" data-theme-target="dark" title="Ativar Tema Escuro">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            <span>Escuro</span>
+          </button>
+        </div>
+
+        <!-- Menu do Usuário Autenticado -->
+        <div class="user-profile-menu-container">
+          <button type="button" id="userMenuBtn" class="user-menu-btn" aria-haspopup="true" aria-expanded="false" title="Menu da Conta">
+            <div class="user-avatar-small" id="headerUserAvatar">
+              <span id="headerUserInitials">U</span>
+            </div>
+            <span class="user-name-label" id="headerUserName">Usuário</span>
+            <svg class="svg-icon chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- Dropdown do Usuário -->
+          <div id="userDropdown" class="user-dropdown hidden" role="menu">
+            <div class="dropdown-header">
+              <div class="dropdown-avatar-wrap" id="dropdownUserAvatar">
+                <span id="dropdownUserInitials">U</span>
+              </div>
+              <div class="dropdown-user-details">
+                <strong id="dropdownUserName">Nome do Usuário</strong>
+                <span id="dropdownUserEmail">usuario@email.com</span>
+              </div>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <button type="button" id="openProfileModalBtn" class="dropdown-item" role="menuitem">
+              <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>Editar Perfil & Foto</span>
+            </button>
+
+            <button type="button" id="openCategoriesModalBtn" class="dropdown-item" role="menuitem">
+              <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+              <span>Personalizar Categorias</span>
+            </button>
+
+            <div class="dropdown-divider"></div>
+
+            <button type="button" id="logoutBtn" class="dropdown-item dropdown-logout-btn" role="menuitem">
+              <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span>Sair da Conta</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Botão: Nova Tarefa -->
+        <button id="openNewTaskModalBtn" class="primary-btn">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Nova Tarefa</span>
+          <kbd class="btn-kbd">N</kbd>
+        </button>
+      </div>
+    </header>
+
+    <!-- Barra de Controle: Filtros de Status e Pesquisa -->
+    <section class="controls-bar" aria-label="Barra de busca e filtros">
+      <div class="search-box">
+        <svg class="svg-icon search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Buscar no seu painel..." 
+          autocomplete="off"
+          aria-label="Buscar tarefas"
+        >
+        <kbd class="search-kbd" title="Pressione / para buscar">/</kbd>
+        <button id="clearSearchBtn" class="clear-search-btn hidden" aria-label="Limpar busca" title="Limpar busca">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="status-filters" role="group" aria-label="Filtro por status">
+        <button class="status-pill active" data-status="all">Todas</button>
+        <button class="status-pill" data-status="pending">Pendentes</button>
+        <button class="status-pill" data-status="completed">Concluídas</button>
+      </div>
+    </section>
+
+    <!-- Abas de Categorias do Usuário -->
+    <nav class="category-tabs" id="categoryTabsContainer" aria-label="Filtrar por categorias">
+      <!-- Inseridas dinamicamente pelo app.js via SQLite -->
+    </nav>
+
+    <!-- Barra de Metadados & Ordenação -->
+    <div class="list-meta-bar">
+      <div class="active-filter-desc" id="activeFilterDesc">
+        Exibindo todas as tarefas
+      </div>
+      <div class="sort-selector">
+        <svg class="svg-icon meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="15" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="9" y2="18"></line>
+        </svg>
+        <label for="sortBySelect">Ordenar por:</label>
+        <select id="sortBySelect">
+          <option value="dueDateAsc">Prazo de Vencimento (Mais próximas)</option>
+          <option value="priorityDesc">Prioridade (Alta primeiro)</option>
+          <option value="createdDesc">Mais Recentes</option>
+          <option value="titleAsc">Título (A-Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Lista de Tarefas -->
+    <main class="tasks-container" id="tasksContainer" aria-live="polite">
+      <!-- Cartões inseridos dinamicamente pelo app.js -->
+    </main>
+
+    <!-- Estado Vazio (Empty State) -->
+    <div id="emptyState" class="empty-state hidden">
+      <div class="empty-icon-wrapper">
+        <svg class="svg-icon empty-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+      </div>
+      <h3 id="emptyTitle">Nenhuma tarefa encontrada</h3>
+      <p id="emptySubtitle">Seu painel está limpo. Crie sua primeira tarefa clicando no botão abaixo.</p>
+      <button id="emptyCreateBtn" class="primary-btn">
+        <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Criar Primeira Tarefa</span>
+      </button>
+    </div>
+
+    <!-- Banner de Permissão de Notificações -->
+    <div id="notificationBanner" class="notification-banner hidden">
+      <div class="banner-content">
+        <div class="banner-icon-badge">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </div>
+        <span>Ative as notificações para receber alertas sonoros e na tela no horário programado.</span>
+      </div>
+      <div class="banner-actions">
+        <button id="enableNotificationsBtn" class="banner-btn primary">Ativar Alertas</button>
+        <button id="dismissNotificationsBtn" class="banner-btn text">Mais tarde</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAIS / DIALOGS
+       ============================================================ -->
+
+  <!-- 1. Modal: Criar / Editar Tarefa -->
+  <dialog id="taskModal" class="task-modal" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </div>
+          <h2 id="modalTitle">Nova Tarefa</h2>
+        </div>
+        <button id="closeModalBtn" class="close-modal-btn" aria-label="Fechar modal" title="Fechar (Esc)">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="taskForm" class="task-form">
+        <input type="hidden" id="taskIdInput">
+
+        <!-- Título -->
+        <div class="form-group">
+          <label for="taskTitleInput">Título da Tarefa <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="taskTitleInput" 
+            placeholder="Ex: Entregar relatório trimestral" 
+            required 
+            maxlength="100"
+            autocomplete="off"
+          >
+        </div>
+
+        <!-- Descrição -->
+        <div class="form-group">
+          <label for="taskDescInput">Descrição e Detalhes</label>
+          <textarea 
+            id="taskDescInput" 
+            placeholder="Adicione observações, links ou subtópicos importantes..." 
+            rows="3"
+            maxlength="500"
+          ></textarea>
+        </div>
+
+        <!-- Linha Dupla: Categoria e Prioridade -->
+        <div class="form-row">
+          <div class="form-group col-half">
+            <div class="label-with-action">
+              <label for="taskCategorySelect">Categoria <span class="required">*</span></label>
+              <button type="button" id="quickManageCatBtn" class="link-btn">+ Personalizar</button>
+            </div>
+            <select id="taskCategorySelect" required>
+              <!-- Categorias preenchidas dinamicamente a partir do SQLite -->
+            </select>
+          </div>
+
+          <div class="form-group col-half">
+            <label for="taskPrioritySelect">Prioridade <span class="required">*</span></label>
+            <select id="taskPrioritySelect" required>
+              <option value="low">🟢 Baixa</option>
+              <option value="medium" selected>🟡 Média</option>
+              <option value="high">🔴 Alta</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Linha Dupla: Data e Hora de Vencimento -->
+        <div class="form-row">
+          <div class="form-group col-half">
+            <label for="taskDueDateInput">Data & Hora de Vencimento</label>
+            <input type="datetime-local" id="taskDueDateInput">
+          </div>
+
+          <div class="form-group col-half reminder-group">
+            <label class="checkbox-label" for="taskReminderCheckbox">
+              <input type="checkbox" id="taskReminderCheckbox" checked>
+              <span class="checkbox-custom"></span>
+              <span class="label-text">
+                <strong>Ativar Lembrete</strong>
+                <small>Notificar quando chegar a hora</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Ações do Modal -->
+        <div class="modal-footer">
+          <button type="button" id="cancelModalBtn" class="secondary-btn">Cancelar</button>
+          <button type="submit" id="saveTaskBtn" class="primary-btn">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Salvar Tarefa</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 2. Modal: Editar Perfil -->
+  <dialog id="profileModal" class="task-modal" aria-labelledby="profileModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <h2 id="profileModalTitle">Perfil no SQLite</h2>
+        </div>
+        <button id="closeProfileModalBtn" class="close-modal-btn" aria-label="Fechar modal" title="Fechar (Esc)">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="profileForm" class="task-form">
+        <div class="avatar-edit-section">
+          <div class="avatar-preview-wrapper" id="profileAvatarPreview">
+            <span id="profileAvatarInitials">U</span>
+          </div>
+
+          <div class="avatar-edit-controls">
+            <label class="upload-btn primary-btn" for="profilePhotoInput">
+              <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+              <span>Alterar Foto</span>
+            </label>
+            <input type="file" id="profilePhotoInput" accept="image/*" class="hidden-file-input">
+            <button type="button" id="removePhotoBtn" class="secondary-btn text-danger">Remover Foto</button>
+            <p class="avatar-hint">A foto é salva com segurança no banco de dados SQLite.</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="profileNameInput">Seu Nome <span class="required">*</span></label>
+          <input type="text" id="profileNameInput" required placeholder="Ex: Ana Silva" maxlength="50">
+        </div>
+
+        <div class="form-group">
+          <label for="profileEmailInput">Seu E-mail <span class="required">*</span></label>
+          <input type="email" id="profileEmailInput" required placeholder="Ex: ana.silva@email.com" maxlength="60">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="cancelProfileBtn" class="secondary-btn">Cancelar</button>
+          <button type="submit" class="primary-btn">Salvar Alterações</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 3. Modal: Gerenciador de Categorias no SQLite -->
+  <dialog id="categoriesModal" class="task-modal" aria-labelledby="categoriesModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge">
+            <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+              <line x1="7" y1="7" x2="7.01" y2="7"></line>
+            </svg>
+          </div>
+          <h2 id="categoriesModalTitle">Suas Categorias</h2>
+        </div>
+        <button id="closeCategoriesModalBtn" class="close-modal-btn" aria-label="Fechar modal" title="Fechar (Esc)">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="task-form">
+        <div class="current-categories-list" id="currentCategoriesList">
+          <!-- Renderizado dinamicamente via API -->
+        </div>
+
+        <div class="dropdown-divider"></div>
+
+        <form id="addCategoryForm" class="add-category-box">
+          <h4 class="sub-form-title">+ Nova Categoria</h4>
+          
+          <div class="form-group">
+            <label for="newCategoryNameInput">Nome da Categoria</label>
+            <input type="text" id="newCategoryNameInput" placeholder="Ex: Finanças, Academia, Estudos..." required maxlength="25">
+          </div>
+
+          <div class="form-group">
+            <label>Cor de Identificação</label>
+            <div class="color-palette-picker" id="colorPickerContainer">
+              <!-- Botões de cores criados no app.js -->
+            </div>
+            <input type="hidden" id="selectedCategoryColor" value="#0284c7">
+          </div>
+
+          <div class="form-group">
+            <label>Ícone Representativo</label>
+            <div class="icon-palette-picker" id="iconPickerContainer">
+              <!-- Botões de ícones criados no app.js -->
+            </div>
+            <input type="hidden" id="selectedCategoryIcon" value="tag">
+          </div>
+
+          <button type="submit" class="primary-btn full-width">Adicionar Categoria</button>
+        </form>
+
+        <div class="modal-footer">
+          <button type="button" id="doneCategoriesBtn" class="secondary-btn">Concluir</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Container de Toasts Flutuantes -->
+  <div id="toastContainer" class="toast-container" aria-live="assertive"></div>
+
+  <!-- Script da Aplicação -->
+  <script src="app.js"></script>
+</body>
+</html>
